@@ -84,7 +84,6 @@ getAdminsMsgText = (robot, slackMsg) ->
         return 'There are no admins!'
 
     response = 'The admins are:'
-    slackMsg.send "#{Util.inspect admins}"
     for userId in admins
         user = robot.brain.userForId userId
         response += '\n@' + user.name
