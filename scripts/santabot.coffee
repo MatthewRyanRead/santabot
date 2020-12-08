@@ -1,3 +1,6 @@
+# Commands:
+#   hubot dewit - Assigns each channel member a Secret Santa, and messages each one with details!
+
 Util = require "util"
 { WebClient } = require "@slack/client"
 moment = require "moment"
@@ -47,24 +50,26 @@ postMatchesSent = (robot, web, slackMsg) ->
     slackMsg.send 'Users have been DM\'d with their matches!'
 
 dmPostMatches = (robot, web, slackMsg) ->
-    buyerUserIds = slackGetConversationMembers()
-    recipientUserIds = []
-    while true
-        recipientUserIds = buyerUserIds
-                .map(a -> { sort: Math.random(), value: a })
-                .sort((a, b) -> a.sort - b.sort)
-                .map(a -> a.value)
+    slackGetConversationMembers(web, extractRoomId slackMsg).then (channel) ->
+        # TODO: filter out bots
+        buyerUserIds = channel.members
+        recipientUserIds = []
+        while true
+            recipientUserIds = buyerUserIds
+                    .map((a) -> { sort: Math.random(), value: a })
+                    .sort((a, b) -> a.sort - b.sort)
+                    .map((a) -> a.value)
 
-        acceptable = true
-        recipientUserIds.forEach (recipientUserId, i) ->
-            if recipientUserId == buyerUserIds[i]
-                acceptable = false
+            acceptable = true
+            recipientUserIds.forEach (recipientUserId, i) ->
+                if recipientUserId == buyerUserIds[i]
+                    acceptable = false
 
-        if acceptable
-            break
+            if acceptable
+                break
 
-    buyerUserIds.forEach (userId, i) ->
-        slackDmPostMessage web, userId, 'You are the Secret Santa for <@' + recipientUserIds[i] + '>. Congratulations!'
+        buyerUserIds.forEach (userId, i) ->
+            slackDmPostMessage web, userId, 'You are the Secret Santa for <@' + recipientUserIds[i] + '>. Congratulations!'
 
 ### admin helpers ###
 
