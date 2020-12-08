@@ -51,8 +51,7 @@ postMatchesSent = (robot, web, slackMsg) ->
 
 dmPostMatches = (robot, web, slackMsg) ->
     slackGetConversationMembers(web, extractRoomId slackMsg).then (channel) ->
-        # TODO: filter out bots
-        buyerUserIds = channel.members
+        buyerUserIds = channel.members.filter((userId) -> !robot.brain.userForId(userId).slack.is_bot)
         recipientUserIds = []
         while true
             recipientUserIds = buyerUserIds
@@ -67,6 +66,8 @@ dmPostMatches = (robot, web, slackMsg) ->
 
             if acceptable
                 break
+            else
+                console.debug 'Random shuffle failed, trying again'
 
         buyerUserIds.forEach (userId, i) ->
             slackDmPostMessage web, userId, 'You are the Secret Santa for <@' + recipientUserIds[i] + '>. Congratulations!'
