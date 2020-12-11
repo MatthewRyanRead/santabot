@@ -73,7 +73,7 @@ tryAddAdmin = (robot, web, slackMsg) ->
         slackMsg.send '<@' + user.id + '> is already an admin!'
     else
         saveAdmin robot, slackMsg, user.id
-        slackMsg.send '<@' + user.id + '>  is now an admin.'
+        slackMsg.send '<@' + user.id + '> is now an admin.'
 
 postAdmins = (robot, web, slackMsg) ->
     slackMsg.send getAdminsMsgText robot, slackMsg
