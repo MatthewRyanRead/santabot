@@ -85,6 +85,10 @@ postMatchesSent = (robot, web, slackMsg) ->
 dmPostMatches = (robot, web, slackMsg) ->
     slackGetConversationMembers(web, extractRoomId slackMsg).then (channel) ->
         buyerUserIds = channel.members.filter((userId) -> !isBot robot, userId)
+        if !buyerUserIds or buyerUserIds.length < 3
+            slackMsg.send 'There must be at least 3 people!'
+            return
+
         recipientUserIds = []
         while true
             recipientUserIds = buyerUserIds
