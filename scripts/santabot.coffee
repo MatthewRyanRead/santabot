@@ -17,21 +17,25 @@ module.exports = (robot) ->
         robot.respond /Who are the admins/i, (slackMsg) ->
             postAdmins robot, web, slackMsg
 
-        ### primary commands ###
-
-        robot.hear /dewit/i, (slackMsg) ->
-            dmPostMatches robot, web, slackMsg
-            postMatchesSent robot, web, slackMsg
-
         ### admin-only commands ###
 
-        # TODO: "Add @name as admin"
-        # TODO: admin ability to remove newer admin
+        robot.respond /dewit/i, (slackMsg) ->
+            dewit robot, web, slackMsg
+
+        robot.respond /Add admin/i, (slackMsg) ->
+            tryAddAdmin robot, web, slackMsg
 
 ### message handlers ###
 
+dewit = (robot, web, slackMsg) ->
+    if isAdminUser robot, slackMsg, extractUserId slackMsg
+        dmPostMatches robot, web, slackMsg
+        postMatchesSent robot, web, slackMsg
+    else
+       slackMsg.send 'Please wait for an admin to do that!'
+
 trySetAdmin = (robot, web, slackMsg) ->
-    if isAdminUser robot, slackMsg
+    if isAdminUser robot, slackMsg, extractUserId slackMsg
         slackMsg.send 'You are already an admin.'
         return
 
@@ -40,8 +44,37 @@ trySetAdmin = (robot, web, slackMsg) ->
     if admins.length
         slackMsg.send 'Admin(s) already exist!\n' + getAdminsMsgText robot, slackMsg
     else
-        saveAdmin robot, slackMsg
+        saveAdmin robot, slackMsg, extractUserId slackMsg
         slackMsg.send 'You are now the admin.'
+
+tryAddAdmin = (robot, web, slackMsg) ->
+    if !isAdminUser robot, slackMsg, extractUserId slackMsg
+        slackMsg.send 'Only an admin can do that!'
+        return
+
+    msg = extractMsgText slackMsg
+    startIndex = msg.lastIndexOf '@'
+    userName = msg.substr startIndex + 1
+    if !userName or userName.length == 0
+        slackMsg.send 'Only a user can be made an admin.'
+        return
+
+    user = robot.brain.userForName userName
+    if !user
+        slackMsg.send 'Only a user can be made an admin.'
+        return
+
+    if isAdminUser robot, slackMsg, user.id
+        slackMsg.send '<@' + user.id + '> is already an admin.'
+        return
+
+    admins = loadAdmins robot, slackMsg
+
+    if admins.includes(user.id)
+        slackMsg.send '<@' + user.id + '> is already an admin!'
+    else
+        saveAdmin robot, slackMsg, user.id
+        slackMsg.send '<@' + user.id + '>  is now an admin.'
 
 postAdmins = (robot, web, slackMsg) ->
     slackMsg.send getAdminsMsgText robot, slackMsg
@@ -51,7 +84,7 @@ postMatchesSent = (robot, web, slackMsg) ->
 
 dmPostMatches = (robot, web, slackMsg) ->
     slackGetConversationMembers(web, extractRoomId slackMsg).then (channel) ->
-        buyerUserIds = channel.members.filter((userId) -> !robot.brain.userForId(userId).slack.is_bot)
+        buyerUserIds = channel.members.filter((userId) -> !isBot robot, userId)
         recipientUserIds = []
         while true
             recipientUserIds = buyerUserIds
@@ -74,9 +107,9 @@ dmPostMatches = (robot, web, slackMsg) ->
 
 ### admin helpers ###
 
-isAdminUser = (robot, slackMsg) ->
+isAdminUser = (robot, slackMsg, userId) ->
     admins = loadAdmins robot, slackMsg
-    (extractUserId slackMsg) in admins
+    userId in admins
 
 getAdminsMsgText = (robot, slackMsg) ->
     admins = loadAdmins robot, slackMsg
@@ -85,8 +118,7 @@ getAdminsMsgText = (robot, slackMsg) ->
 
     response = 'The admins are:'
     for userId in admins
-        user = robot.brain.userForId userId
-        response += '\n@' + user.name
+        response += '\n<@' + userId + '>'
 
     response
 
@@ -109,10 +141,13 @@ makeAdminKey = (slackMsg) ->
 loadAdmins = (robot, slackMsg) ->
     (robot.brain.get makeAdminKey slackMsg) or []
 
-saveAdmin = (robot, slackMsg, userId = extractUserId slackMsg) ->
+saveAdmin = (robot, slackMsg, userId) ->
     admins = loadAdmins robot, slackMsg
     admins.push userId
     robot.brain.set (makeAdminKey slackMsg), admins
+
+isBot = (robot, userId) ->
+    robot.brain.userForId(userId).slack.is_bot
 
 ### incoming message helpers ###
 
