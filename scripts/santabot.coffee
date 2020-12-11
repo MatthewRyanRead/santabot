@@ -30,7 +30,6 @@ module.exports = (robot) ->
 dewit = (robot, web, slackMsg) ->
     if isAdminUser robot, slackMsg, extractUserId slackMsg
         dmPostMatches robot, web, slackMsg
-        postMatchesSent robot, web, slackMsg
     else
        slackMsg.send 'Please wait for an admin to do that!'
 
@@ -108,6 +107,7 @@ dmPostMatches = (robot, web, slackMsg) ->
 
         buyerUserIds.forEach (userId, i) ->
             slackDmPostMessage web, userId, 'You are the Secret Santa for <@' + recipientUserIds[i] + '>. Congratulations!'
+        postMatchesSent robot, web, slackMsg
 
 ### admin helpers ###
 
