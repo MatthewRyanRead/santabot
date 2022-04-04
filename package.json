@@ -11,7 +11,7 @@
     "hubot-redis-brain": "^1.0.0",
     "hubot-scripts": "^2.17.2",
     "hubot-slack": "^4.9.0",
-    "moment": "^2.29.1"
+    "moment": "^2.29.2"
   },
   "engines": {
     "node": "15.3.0",
