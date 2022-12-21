@@ -1,3 +1,5 @@
+**NOTICE:** With changes to Heroku and especially changes to Slack (removing the legacy bot API), this probably doesn't work anymore!
+
 # santabot
 
 A Slack bot for setting up a Secret Santa exchange.  Just add it to a channel, invite everyone participating, set up the admin(s), and trigger it once you're ready!
